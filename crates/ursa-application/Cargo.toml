@@ -1,0 +1,18 @@
+[package]
+name = "ursa-application"
+version = "0.1.0"
+edition = "2021"
+authors = ["b0xtch <mahmoud@fleek.co>"]
+
+[dependencies]
+anyhow.workspace = true
+async-trait.workspace = true
+serde_json.workspace = true
+serde.workspace = true
+tokio.workspace = true
+
+ethers = { git = "https://github.com/gakonst/ethers-rs " }
+foundry-evm = { git = "https://github.com/foundry-rs/foundry" }
+hex = "0.4.3"
+tendermint-abci = { version = "0.23.7", features = ["client"] }
+tendermint-proto = "0.23.7"
