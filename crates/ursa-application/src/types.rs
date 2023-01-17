@@ -1,3 +1,4 @@
+use anyhow::Result;
 use ethers::prelude::*;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -53,7 +54,7 @@ impl<Db: Database + DatabaseCommit> State<Db> {
         &mut self,
         tx: TransactionRequest,
         read_only: bool,
-    ) -> eyre::Result<TransactionResult> {
+    ) -> Result<TransactionResult> {
         let mut evm = revm::EVM::new();
         evm.env = self.env.clone();
         evm.env.tx = TxEnv {
@@ -74,17 +75,17 @@ impl<Db: Database + DatabaseCommit> State<Db> {
         };
         evm.database(&mut self.db);
 
-        let (ret, out, gas, state, logs) = evm.transact();
+        let (execution_result, state) = evm.transact();
         if !read_only {
             self.db.commit(state);
         };
 
         Ok(TransactionResult {
             transaction: tx,
-            exit: ret,
-            gas,
-            logs,
-            out,
+            exit: execution_result.exit_reason,
+            gas: execution_result.gas_used,
+            logs: execution_result.logs,
+            out: execution_result.out,
         })
     }
 }
@@ -247,7 +248,10 @@ impl<Db: Send + Sync + Database + DatabaseCommit> InfoTrait for Info<Db> {
                 let result = state.execute(tx, true).await.unwrap();
                 QueryResponse::Tx(result)
             }
-            Query::Balance(address) => QueryResponse::Balance(state.db.basic(address).balance),
+            Query::Balance(address) => match state.db.basic(address) {
+                Ok(info) => QueryResponse::Balance(info.unwrap_or_default().balance),
+                _ => panic!("error retrieveing balance"),
+            },
         };
 
         ResponseQuery {
@@ -282,7 +286,7 @@ mod tests {
 
     #[tokio::test]
     async fn run_and_query_tx() {
-        let val = ethers::utils::parse_units(1, 18).unwrap();
+        let val = ethers::utils::parse_units(1, 18).unwrap().into();
         let alice = Address::random();
         let bob = Address::random();
 
