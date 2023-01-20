@@ -1,3 +1,14 @@
+## Readme
+
+The purpose of this repo is to provide a working example of ursa x narwhal x abci x evm. It is a proof of concept but also to provide a workable base to build upon.
+
+### Still Todo
+
+    - Unify narwhal ursa keystores
+    - Deploy and interact with our staking contract on Revm
+    - Provide certificate structure for adding/removing committee members
+    - Integrate ABCI server with ursa-rpc-service instead of standalone
+
 # Ursa
 
 [![website](https://img.shields.io/badge/website-000?style=for-the-badge)](https://fleek.network)&nbsp;
@@ -25,7 +36,8 @@ Ursa, a decentralized content delivery network.
 
 #### Instructions
 
-Build and install the latest *HEAD* version:
+Build and install the latest _HEAD_ version:
+
 ```sh
 make install
 ```
@@ -33,12 +45,13 @@ make install
 You can run the node with `ursa` command. This will run the node with default parameters.
 
 #### CLI Flags
+
 - `--config` A toml file containing relevant configurations.
-	- Default value: *empty*. 
+  - Default value: _empty_.
 - `--rpc` Allow rpc to be active or not.
- 	- Default value: *true*.
+  - Default value: _true_.
 - `--rpc-port` Port used for JSON-RPC communication.
-	- Default value: *4069*.
+  - Default value: _4069_.
 
 #### CLI Subcommands
 
@@ -91,7 +104,7 @@ You can run the full node with some supporting infrastructure through docker-com
 
 > Make sure to edit [nginx/app.conf](/docker/full-node/data/nginx/app.conf) with your node's domain name, and run [init-letsencrypt.sh](/docker/full-node/init-letsencrypt.sh). Detailed instructions [here](/docker/full-node/README.md)
 
-Build the node and fetch infra images: 
+Build the node and fetch infra images:
 
 ```sh
 make compose-build
@@ -104,6 +117,7 @@ make compose-up
 ```
 
 Shut down node and infra:
+
 ```sh
 make compose-down
 ```
@@ -117,10 +131,12 @@ By default, the compose will bind-mount the host folder `~/.ursa/` to the node. 
 To access the rpc you can do through the http JSON-RPC api. The endpoint to request is **`/rpc/v0`**. The server can be accessible in port `4069` for local development and in port `80/443` through the reverse proxy (nginx at the moment).
 
 ## Contributing
+
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 Please make sure to update tests as appropriate.
 
 ## License
+
 [MIT](https://github.com/fleek-network/ursa/blob/main/LICENSE-MIT)
 [APACHE 2.0](https://github.com/fleek-network/ursa/blob/main/LICENSE-APACHE)
