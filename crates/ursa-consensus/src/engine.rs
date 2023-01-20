@@ -276,18 +276,16 @@ pub enum WorkerMessage {
     Batch(Batch),
 }
 
+//TODO: this start function probably would better live in the ursa crate, along with the process function
 pub async fn consensus_start(
     config: ConsensusConfig,
     app_api: String,
     key: LibKeypair,
 ) -> Result<()> {
-    let parameters = Parameters::default();
+    let parameters = config.narwhal_params;
     let keypair: KeyPair;
-
     if let LibKeypair::Ed25519(ed_key) = key {
-        warn!("{:?} before transfer:", ed_key.public().encode());
         keypair = KeyPair::load(ed_key.public().encode(), ed_key.encode());
-        warn!("keypair: {}", keypair.name.encode_base64());
     } else {
         bail!("Keypair not supported");
     }
