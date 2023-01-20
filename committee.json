@@ -1,0 +1,20 @@
+{
+    "authorities": {
+        "CDjQkecEMnuTGKlagWk6J3PPquqF5XLuSTVeqPtVnAY=": {
+            "stake": 1,
+            "primary": {
+                "primary_to_primary": "0.0.0.0:3002",
+                "worker_to_primary": "0.0.0.0:3003",
+                "api_rpc": "0.0.0.0:3004",
+                "api_abci": "0.0.0.0:3005"
+            },
+            "workers": {
+                "0": {
+                    "primary_to_worker": "0.0.0.0:3006",
+                    "worker_to_worker": "0.0.0.0:3008",
+                    "transactions": "0.0.0.0:3007"
+                }
+            }
+        }
+    }
+}

@@ -1,9 +1,11 @@
-use crate::AbciQueryQuery;
-use anyhow::{bail, Result};
+use crate::{AbciApi, AbciQueryQuery, ConsensusConfig};
+use anyhow::{bail, Context, Result};
 use db::{rocks::RocksDb, rocks_config::RocksDbConfig};
+use libp2p::identity::ed25519::PublicKey;
+use libp2p::identity::Keypair as LibKeypair;
 use std::net::SocketAddr;
 use std::path::PathBuf;
-use tokio::sync::mpsc::Receiver;
+use tokio::sync::mpsc::{channel, Receiver};
 use tokio::sync::oneshot::Sender as OneShotSender;
 use tracing::warn;
 
@@ -16,8 +18,15 @@ use tendermint_proto::abci::{
 use tendermint_proto::types::Header;
 
 // Narwhal types
-use narwhal_crypto::Digest;
-use narwhal_primary::Certificate;
+use narwhal_config::{Committee, Import as _, KeyPair, Parameters};
+use narwhal_consensus::Consensus;
+use narwhal_crypto::{Digest, PublicKey as NarPublicKey};
+use narwhal_primary::{Certificate, Primary};
+use narwhal_store::Store;
+use narwhal_worker::Worker;
+
+/// The default channel capacity.
+pub const CHANNEL_CAPACITY: usize = 1_000;
 
 /// The engine drives the ABCI Application by concurrently polling for:
 /// 1. Calling the BeginBlock -> DeliverTx -> EndBlock -> Commit event loop on the ABCI App on each Bullshark
@@ -265,4 +274,116 @@ pub type Batch = Vec<Transaction>;
 #[derive(serde::Deserialize)]
 pub enum WorkerMessage {
     Batch(Batch),
+}
+
+pub async fn consensus_start(
+    config: ConsensusConfig,
+    app_api: String,
+    key: LibKeypair,
+) -> Result<()> {
+    let parameters = Parameters::default();
+    let keypair: KeyPair;
+
+    if let LibKeypair::Ed25519(ed_key) = key {
+        warn!("{:?} before transfer:", ed_key.public().encode());
+        keypair = KeyPair::load(ed_key.public().encode(), ed_key.encode());
+        warn!("keypair: {}", keypair.name.encode_base64());
+    } else {
+        bail!("Keypair not supported");
+    }
+
+    //Read the committe from a file
+    let committee = Committee::import(&config.committee_path)
+        .with_context(|| "Failed to read the committee data for committee file")?;
+
+    //Make the primary data store+ worker datastore
+    let primary_store =
+        Store::new(&config.database_path).with_context(|| "Failed to create primary store")?;
+    let worker_store = Store::new(&format!("{}-{}", config.database_path, "worker"))
+        .with_context(|| "Failed to create worker store")?;
+    // Channels the sequence of certificates.
+    let (tx_output, mut rx_output) = channel(CHANNEL_CAPACITY);
+
+    //Spawn the primary and and consensus core
+
+    let (tx_new_certificates, rx_new_certificates) = channel(CHANNEL_CAPACITY);
+    let (tx_feedback, rx_feedback) = channel(CHANNEL_CAPACITY);
+
+    let keypair_name = keypair.name;
+
+    Primary::spawn(
+        keypair,
+        committee.clone(),
+        parameters.clone(),
+        primary_store.clone(),
+        /* tx_consensus */ tx_new_certificates,
+        /* rx_consensus */ rx_feedback,
+    );
+    Consensus::spawn(
+        committee.clone(),
+        parameters.gc_depth,
+        /* rx_primary */ rx_new_certificates,
+        /* tx_primary */ tx_feedback,
+        tx_output,
+    );
+
+    //spawn worker
+
+    //for now we just spawn one worker but there could be more
+    let id: u32 = 0;
+
+    Worker::spawn(
+        keypair_name.clone(),
+        id,
+        committee.clone(),
+        parameters,
+        worker_store.clone(),
+    );
+
+    process(
+        rx_output,
+        &config.database_path,
+        keypair_name,
+        committee,
+        config.domain,
+        app_api,
+    )
+    .await?;
+    unreachable!();
+}
+
+async fn process(
+    rx_output: Receiver<Certificate>,
+    store_path: &str,
+    keypair_name: NarPublicKey,
+    committee: Committee,
+    abci_api: String,
+    app_api: String,
+) -> Result<()> {
+    // address of mempool
+    let mempool_address = committee
+        .worker(&keypair_name.clone(), &0)
+        .expect("Our public key or worker id is not in the committee")
+        .transactions;
+
+    // ABCI queries will be sent using this from the RPC to the ABCI client
+    let (tx_abci_queries, rx_abci_queries) = channel(CHANNEL_CAPACITY);
+
+    tokio::spawn(async move {
+        let api = AbciApi::new(mempool_address, tx_abci_queries);
+        // let tx_abci_queries = tx_abci_queries.clone();
+        // Spawn the ABCI RPC endpoint
+        let mut address = abci_api.parse::<SocketAddr>().unwrap();
+        address.set_ip("0.0.0.0".parse().unwrap());
+        warp::serve(api.routes()).run(address).await
+    });
+
+    // Analyze the consensus' output.
+    // Spawn the network receiver listening to messages from the other primaries.
+    let mut app_address = app_api.parse::<SocketAddr>().unwrap();
+    app_address.set_ip("0.0.0.0".parse().unwrap());
+    let mut engine = Engine::new(app_address, store_path, rx_abci_queries);
+    engine.run(rx_output).await?;
+
+    Ok(())
 }

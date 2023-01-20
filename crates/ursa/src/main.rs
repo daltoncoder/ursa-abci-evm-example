@@ -102,7 +102,7 @@ async fn main() -> Result<()> {
 
                 let index_store = Arc::new(UrsaStore::new(Arc::clone(&Arc::new(provider_db))));
                 let index_provider_engine = ProviderEngine::new(
-                    keypair,
+                    keypair.clone(),
                     Arc::clone(&store),
                     index_store,
                     provider_config,
