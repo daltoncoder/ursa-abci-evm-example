@@ -11,6 +11,8 @@ use structopt::StructOpt;
 use tokio::task;
 use tracing::{error, info};
 use ursa::{cli_error_and_die, wait_until_ctrlc, Cli, Subcommand};
+use ursa_application::application_start;
+use ursa_consensus::consensus_start;
 use ursa_index_provider::engine::ProviderEngine;
 use ursa_network::UrsaService;
 use ursa_rpc_service::{api::NodeNetworkInterface, server::Server};
@@ -46,6 +48,8 @@ async fn main() -> Result<()> {
                     network_config,
                     provider_config,
                     server_config,
+                    application_config,
+                    consensus_config,
                 } = config;
 
                 // ursa service setup
@@ -102,7 +106,7 @@ async fn main() -> Result<()> {
 
                 let index_store = Arc::new(UrsaStore::new(Arc::clone(&Arc::new(provider_db))));
                 let index_provider_engine = ProviderEngine::new(
-                    keypair,
+                    keypair.clone(),
                     Arc::clone(&store),
                     index_store,
                     provider_config,
@@ -146,6 +150,23 @@ async fn main() -> Result<()> {
                     }
                 });
 
+                //Store this to pass to consensus engine
+                let app_api = application_config.domain.clone();
+
+                // Start the application server
+                let application_task = task::spawn(async move {
+                    if let Err(err) = application_start(application_config).await {
+                        error!("[application_task] - {:?}", err)
+                    }
+                });
+
+                //start the consensus engine
+                let consensus_task = task::spawn(async move {
+                    if let Err(err) = consensus_start(consensus_config, app_api, keypair).await {
+                        error!("[consensus_task] - {:?}", err)
+                    }
+                });
+
                 // register with ursa node tracker
                 if !network_config.tracker.is_empty() {
                     match ursa_tracker::register_with_tracker(network_config.tracker, registration)
@@ -162,6 +183,8 @@ async fn main() -> Result<()> {
                 rpc_task.abort();
                 service_task.abort();
                 provider_task.abort();
+                application_task.abort();
+                consensus_task.abort();
             }
         }
         Err(e) => {

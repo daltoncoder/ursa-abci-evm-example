@@ -14,7 +14,10 @@ db.workspace = true
 dirs.workspace = true
 dotenv.workspace = true
 futures.workspace = true
-libp2p = { workspace = true, default-features = false, features = ["identify", "serde"] }
+libp2p = { workspace = true, default-features = false, features = [
+    "identify",
+    "serde",
+] }
 pem.workspace = true
 resolve-path.workspace = true
 serde.workspace = true
@@ -23,6 +26,8 @@ tokio.workspace = true
 toml.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
+ursa-application = { path = "../ursa-application" }
+ursa-consensus = { path = "../ursa-consensus" }
 ursa-index-provider = { path = "../ursa-index-provider" }
 ursa-metrics = { path = "../ursa-metrics" }
 ursa-network = { path = "../ursa-network" }
