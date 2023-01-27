@@ -14,11 +14,10 @@
 //!   sent over a new substream on a connection.
 
 use anyhow::Result;
-use cid::Cid;
 use db::Store;
 use fvm_ipld_blockstore::Blockstore;
 use graphsync::GraphSync;
-use libipld::store::StoreParams;
+use libipld::{store::StoreParams, Cid};
 use libp2p::swarm::behaviour::toggle::Toggle;
 use libp2p::{
     autonat::{Behaviour as Autonat, Config as AutonatConfig},
@@ -195,8 +194,7 @@ where
         // setup the kademlia behaviour
         let mut kad = {
             let store = MemoryStore::new(local_peer_id);
-            // todo(botch): move replication factor to config
-            let replication_factor = NonZeroUsize::new(8).unwrap();
+            let replication_factor = NonZeroUsize::new(config.kad_replication_factor).unwrap();
             let mut kad_config = KademliaConfig::default();
             kad_config
                 .set_protocol_names(vec![Cow::from(KAD_PROTOCOL)])

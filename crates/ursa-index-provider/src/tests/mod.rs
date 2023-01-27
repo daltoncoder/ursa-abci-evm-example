@@ -54,12 +54,13 @@ pub fn provider_engine_init(
         ProviderConfig::default(),
         service.command_sender(),
         server_address,
+        "/ip4/127.0.0.1/tcp/4069".parse().unwrap(),
     );
 
     let router = provider_engine.router();
     task::spawn(async move {
         // startup standalone http server for index provider
-        axum::Server::bind(&SocketAddr::from_str(&format!("0.0.0.0:{}", port)).unwrap())
+        axum::Server::bind(&SocketAddr::from_str(&format!("0.0.0.0:{port}")).unwrap())
             .serve(router.into_make_service())
             .await
             .expect("Failed to start provider server");
