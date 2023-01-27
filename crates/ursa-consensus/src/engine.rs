@@ -343,7 +343,7 @@ pub async fn consensus_start(
         &config.database_path,
         keypair_name,
         committee,
-        config.domain,
+        config.rpc_domain,
         app_api,
     )
     .await?;

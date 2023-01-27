@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ConsensusConfig {
     ///The address to receive ABCI connections to defaults too
-    #[serde(default = "ConsensusConfig::default_domain")]
-    pub domain: String,
+    #[serde(default = "ConsensusConfig::default_rpc_domain")]
+    pub rpc_domain: String,
     ///File path where the json file containing committee location is located
     #[serde(default)]
     pub committee_path: String,
@@ -18,8 +18,8 @@ pub struct ConsensusConfig {
 }
 
 impl ConsensusConfig {
-    fn default_domain() -> String {
-        "0.0.0.0:3002".into()
+    fn default_rpc_domain() -> String {
+        "0.0.0.0:3005".into()
     }
     fn default_database_path() -> String {
         "~/.ursa/data/index_provider_db".into()
@@ -32,9 +32,9 @@ impl ConsensusConfig {
 impl Default for ConsensusConfig {
     fn default() -> Self {
         Self {
-            domain: Self::default_domain(),
+            rpc_domain: Self::default_rpc_domain(),
             database_path: Self::default_database_path(),
-            committee_path: "".into(),
+            committee_path: "./committee.json".into(),
             narwhal_params: Self::default_params(),
         }
     }
