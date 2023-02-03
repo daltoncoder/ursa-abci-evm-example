@@ -16,8 +16,8 @@ tracing-subscriber.workspace = true
 tracing-error.workspace = true
 
 abci-rs = { version = "0.11.3", features = ["async-api" ] }
-ethers = { git = "https://github.com/gakonst/ethers-rs " }
-foundry-evm = { git = "https://github.com/foundry-rs/foundry" }
+ethers = { git = "https://github.com/gakonst/ethers-rs", rev="7da559bbedec67c034391f693a01b6a1b94d6a77" }
+foundry-evm = { git = "https://github.com/foundry-rs/foundry", rev="e1eb91208b304ec9c44831db2945cd1d6ac209cb" }
 hex = "0.4.3"
 tendermint-abci = { version = "0.23.7", features = ["client"] }
 tendermint-proto = "0.23.7"

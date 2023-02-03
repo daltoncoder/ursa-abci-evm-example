@@ -111,3 +111,16 @@ codegen-units = 1
 strip = 'debuginfo'
 # On panic terminate the process.
 panic = 'abort'
+
+[patch.'https://github.com/gakonst/ethers-rs']
+ethers = { git = "https://github.com/qti3e/ethers-rs", rev="7da559bbedec67c034391f693a01b6a1b94d6a77" }
+ethers-addressbook = { git = "https://github.com/qti3e/ethers-rs", rev="7da559bbedec67c034391f693a01b6a1b94d6a77" }
+ethers-contract = { git = "https://github.com/qti3e/ethers-rs", rev="7da559bbedec67c034391f693a01b6a1b94d6a77" }
+ethers-contract-abigen = { git = "https://github.com/qti3e/ethers-rs", rev="7da559bbedec67c034391f693a01b6a1b94d6a77" }
+ethers-contract-derive = { git = "https://github.com/qti3e/ethers-rs", rev="7da559bbedec67c034391f693a01b6a1b94d6a77" }
+ethers-core = { git = "https://github.com/qti3e/ethers-rs", rev="7da559bbedec67c034391f693a01b6a1b94d6a77" }
+ethers-etherscan = { git = "https://github.com/qti3e/ethers-rs", rev="7da559bbedec67c034391f693a01b6a1b94d6a77" }
+ethers-middleware = { git = "https://github.com/qti3e/ethers-rs", rev="7da559bbedec67c034391f693a01b6a1b94d6a77" }
+ethers-providers = { git = "https://github.com/qti3e/ethers-rs", rev="7da559bbedec67c034391f693a01b6a1b94d6a77" }
+ethers-signers = { git = "https://github.com/qti3e/ethers-rs", rev="7da559bbedec67c034391f693a01b6a1b94d6a77" }
+ethers-solc  = { git = "https://github.com/qti3e/ethers-rs", rev="7da559bbedec67c034391f693a01b6a1b94d6a77" }
