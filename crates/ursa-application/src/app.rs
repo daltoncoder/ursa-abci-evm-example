@@ -1,5 +1,5 @@
 use crate::{Consensus, Info, Mempool, Snapshot, State};
-use foundry_evm::revm::{
+use revm::{
     db::{CacheDB, EmptyDB},
     AccountInfo,
 };
