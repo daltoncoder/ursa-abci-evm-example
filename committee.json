@@ -1,18 +1,34 @@
 {
     "authorities": {
-        "CDjQkecEMnuTGKlagWk6J3PPquqF5XLuSTVeqPtVnAY=": {
+        "bJFraMCbZ8dgrp6LuB0tBZgr5jCnkdP0lu4VqW5Aqdg=": {
             "stake": 1,
             "primary": {
-                "primary_to_primary": "0.0.0.0:3002",
-                "worker_to_primary": "0.0.0.0:3003",
-                "api_rpc": "0.0.0.0:3004",
-                "api_abci": "0.0.0.0:3005"
+                "primary_to_primary": "192.168.1.237:3002",
+                "worker_to_primary": "192.168.1.237:3003",
+                "api_rpc": "192.168.1.237:3004",
+                "api_abci": "192.168.1.237:3005"
             },
             "workers": {
                 "0": {
-                    "primary_to_worker": "0.0.0.0:3006",
-                    "worker_to_worker": "0.0.0.0:3008",
-                    "transactions": "0.0.0.0:3007"
+                    "primary_to_worker": "192.168.1.237:3006",
+                    "worker_to_worker": "192.168.1.237:3008",
+                    "transactions": "192.168.1.237:3007"
+                }
+            }
+        },
+        "BMjTd3mFqZoHF1u9YADxUU3AmpB7ca60JGLtgkgtCkw=": {
+            "stake": 1,
+            "primary": {
+                "primary_to_primary": "192.168.1.238:3002",
+                "worker_to_primary": "192.168.1.238:3003",
+                "api_rpc": "192.168.1.238:3004",
+                "api_abci": "192.168.1.238:3005"
+            },
+            "workers": {
+                "0": {
+                    "primary_to_worker": "192.168.1.238:3006",
+                    "worker_to_worker": "192.168.1.238:3008",
+                    "transactions": "192.168.1.238:3007"
                 }
             }
         }
