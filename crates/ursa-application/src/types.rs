@@ -12,7 +12,7 @@ use abci::{
     types::*,
 };
 
-use foundry_evm::revm::{
+use revm::{
     self,
     db::{CacheDB, EmptyDB},
     CreateScheme, Database, DatabaseCommit, Env, Log as RevmLog, Return, TransactOut, TransactTo,
