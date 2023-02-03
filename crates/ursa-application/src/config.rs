@@ -12,7 +12,7 @@ pub struct ApplicationConfig {
 
 impl ApplicationConfig {
     fn default_domain() -> String {
-        "0.0.0.0:3005".into()
+        "0.0.0.0:3004".into()
     }
 }
 
