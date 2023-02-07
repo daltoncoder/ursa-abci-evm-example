@@ -1,9 +1,9 @@
-use crate::{Consensus, Info, Mempool, Snapshot, State};
+use crate::types::{Mempool, Info, Consensus, Snapshot, State};
 use revm::{
     db::{CacheDB, EmptyDB},
-    AccountInfo,
 };
-use std::sync::Arc;
+use std::sync::{Arc};
+use revm::primitives::AccountInfo;
 use tokio::sync::Mutex;
 
 pub struct App<Db> {
@@ -12,6 +12,7 @@ pub struct App<Db> {
     pub consensus: Consensus<Db>,
     pub info: Info<Db>,
 }
+
 
 impl Default for App<CacheDB<EmptyDB>> {
     fn default() -> Self {
@@ -35,7 +36,7 @@ impl App<CacheDB<EmptyDB>> {
                     .parse()
                     .unwrap(),
                 AccountInfo {
-                    balance: ethers::utils::parse_ether(1.5).unwrap(),
+                    balance: ethers::utils::parse_ether(1.5).unwrap().into(),
                     ..Default::default()
                 },
             );
@@ -63,3 +64,5 @@ impl App<CacheDB<EmptyDB>> {
         }
     }
 }
+
+
