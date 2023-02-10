@@ -204,7 +204,7 @@ impl Engine {
     /// Helper function for getting the database handle to a worker associated
     /// with a primary (e.g. Primary db-0 -> Worker-0 db-0-0, Wroekr-1 db-0-1 etc.)
     fn worker_db(&self, id: u32) -> String {
-        format!("{}-{}", self.store_path, id)
+        format!("{}-{}", self.store_path, "worker")
     }
 }
 
