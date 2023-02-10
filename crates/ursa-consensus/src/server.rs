@@ -62,7 +62,6 @@ impl AbciApi<ResponseQuery> {
             .and_then(move |req: AbciQueryQuery| {
                 let tx_abci_queries = self.tx.clone();
                 async move {
-                    warn!("abci_query: {:?}", req);
 
                     let (tx, rx) = oneshot_channel();
                     match tx_abci_queries.send((tx, req.clone())).await {
@@ -70,6 +69,7 @@ impl AbciApi<ResponseQuery> {
                         Err(err) => error!("Error forwarding abci query: {}", err),
                     };
                     let resp = rx.await.unwrap();
+
                     // Return the value
                     Ok::<_, Rejection>(resp.value)
                 }

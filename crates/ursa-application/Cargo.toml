@@ -7,6 +7,7 @@ authors = ["b0xtch <mahmoud@fleek.co>"]
 [dependencies]
 anyhow.workspace = true
 async-trait.workspace = true
+bytes.workspace = true
 clap.workspace = true
 serde_json.workspace = true
 serde.workspace = true
@@ -19,8 +20,10 @@ abci-rs = { version = "0.11.3", features = ["async-api" ] }
 ethers = { git = "https://github.com/gakonst/ethers-rs", rev="7da559bbedec67c034391f693a01b6a1b94d6a77" }
 revm = { version = "3.0.0", features = [
     "serde",
+    "optional_block_gas_limit"
 ] }
 hex = "0.4.3"
 tendermint-abci = { version = "0.23.7", features = ["client"] }
 tendermint-proto = "0.23.7"
+reqwest = "0.11.11"
 

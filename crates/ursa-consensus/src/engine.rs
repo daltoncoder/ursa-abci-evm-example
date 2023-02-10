@@ -211,6 +211,8 @@ impl Engine {
 // Tendermint Lifecycle Helpers
 impl Engine {
     /// Calls the `InitChain` hook on the app, ignores "already initialized" errors.
+    ///
+    /// TODO: this is where we should load a genesis file
     pub fn init_chain(&mut self) -> Result<()> {
         let mut client = ClientBuilder::default().connect(&self.app_address)?;
         match client.init_chain(RequestInitChain::default()) {
@@ -317,6 +319,7 @@ pub async fn consensus_start(
         /* tx_consensus */ tx_new_certificates,
         /* rx_consensus */ rx_feedback,
     );
+
     Consensus::spawn(
         committee.clone(),
         parameters.gc_depth,
@@ -329,14 +332,20 @@ pub async fn consensus_start(
 
     //for now we just spawn one worker but there could be more
     let id: u32 = 0;
+    let new_keypair = keypair_name.clone();
+    let new_committee = committee.clone();
+    let handle = tokio::spawn(async move {
+        tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+        Worker::spawn(
+            new_keypair,
+            0,
+            new_committee,
+            parameters,
+            worker_store.clone(),
+        );
 
-    Worker::spawn(
-        keypair_name.clone(),
-        id,
-        committee.clone(),
-        parameters,
-        worker_store.clone(),
-    );
+        ()
+    });
 
     process(
         rx_output,
@@ -347,6 +356,7 @@ pub async fn consensus_start(
         app_api,
     )
     .await?;
+    handle.await.unwrap();
     unreachable!();
 }
 
@@ -364,6 +374,11 @@ async fn process(
         .expect("Our public key or worker id is not in the committee")
         .transactions;
 
+    //3004
+    warn!("DDD app_api = {}", app_api);
+    //3007
+    warn!("DDD mempool = {}", mempool_address);
+
     // ABCI queries will be sent using this from the RPC to the ABCI client
     let (tx_abci_queries, rx_abci_queries) = channel(CHANNEL_CAPACITY);
 
@@ -371,8 +386,12 @@ async fn process(
         let api = AbciApi::new(mempool_address, tx_abci_queries);
         // let tx_abci_queries = tx_abci_queries.clone();
         // Spawn the ABCI RPC endpoint
+
+
         let mut address = abci_api.parse::<SocketAddr>().unwrap();
         address.set_ip("0.0.0.0".parse().unwrap());
+        //3005
+        warn!("DDD address = {}", address);
         warp::serve(api.routes()).run(address).await
     });
 
@@ -380,6 +399,8 @@ async fn process(
     // Spawn the network receiver listening to messages from the other primaries.
     let mut app_address = app_api.parse::<SocketAddr>().unwrap();
     app_address.set_ip("0.0.0.0".parse().unwrap());
+    //3004
+    warn!("DDD app_address = {}", app_address);
     let mut engine = Engine::new(app_address, store_path, rx_abci_queries);
     engine.run(rx_output).await?;
 
