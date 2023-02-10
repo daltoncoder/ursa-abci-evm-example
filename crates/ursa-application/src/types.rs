@@ -7,12 +7,16 @@ use abci::{
     async_trait,
     types::*,
 };
-use revm::{self, Database, DatabaseCommit, db::{CacheDB, EmptyDB}, primitives::{Env, TxEnv, EVMResult, ExecutionResult}};
+use revm::{self, Database, DatabaseCommit, db::{CacheDB, EmptyDB}, primitives::{Env, TxEnv, ExecutionResult}};
 use std::sync::{Arc};
+use bytes::Bytes;
 use tokio::sync::Mutex;
 use ethers::prelude::{NameOrAddress};
-use ethers::types::TransactionRequest;
-use revm::primitives::{Address, CreateScheme, TransactTo, U256};
+use ethers::types::{Address, TransactionRequest};
+use revm::db::DatabaseRef;
+use revm::primitives::{ CreateScheme, TransactTo, U256, AccountInfo, Bytecode, B160};
+use hex::FromHex;
+
 
 #[derive(Clone, Debug)]
 pub struct State<Db> {
@@ -20,6 +24,17 @@ pub struct State<Db> {
     pub app_hash: Vec<u8>,
     pub db: Db,
     pub env: Env,
+}
+
+pub trait WithGenesisDb {
+    fn insert_account_info(&mut self, address: B160, info: AccountInfo);
+}
+
+impl<Db: DatabaseRef> WithGenesisDb for CacheDB<Db> {
+    #[inline(always)]
+    fn insert_account_info(&mut self, address: B160, info: AccountInfo) {
+        CacheDB::<Db>::insert_account_info(self, address, info);
+    }
 }
 
 impl Default for State<CacheDB<EmptyDB>> {
@@ -54,14 +69,14 @@ impl<Db: Database + DatabaseCommit> State<Db> {
             value: tx.value.unwrap_or_default().into(),
             gas_price: tx.gas_price.unwrap_or_default().into(),
             gas_priority_fee: Some(tx.gas_price.unwrap_or_default().into()),
-            gas_limit: tx.gas.unwrap_or_default().as_u64(),
+            gas_limit: u64::MAX,
             access_list: vec![],
         };
         evm.database(&mut self.db);
 
         let results = match evm.transact() {
             Ok(data) => data,
-            _ => bail!("This is an error")
+            Err(err) => bail!("theres an err")
         };
         if !read_only {
             self.db.commit(results.state);
@@ -88,9 +103,19 @@ impl<Db: Clone> Consensus<Db> {
 }
 
 #[async_trait]
-impl<Db: Clone + Send + Sync + DatabaseCommit + Database> ConsensusTrait for Consensus<Db> {
+impl<Db: Clone + Send + Sync + DatabaseCommit + Database + WithGenesisDb> ConsensusTrait for Consensus<Db> {
     #[tracing::instrument(skip(self))]
     async fn init_chain(&self, _init_chain_request: RequestInitChain) -> ResponseInitChain {
+        tracing::trace!("initing the chain");
+        let bytes = hex::decode("6080604052600436101561001257600080fd5b6000803560e01c80634f2be91f146100905780636d4ce63c1461006c5763c605f76c1461003f5750600080fd5b34610069575061004e366100bb565b610065610059610154565b604051918291826100cf565b0390f35b80fd5b5034610069576100659061007f366100bb565b546040519081529081906020820190565b503461006957506100a0366100bb565b6100656100ab610126565b6040519081529081906020820190565b60009060031901126100c957565b50600080fd5b919091602080825283519081818401526000945b828610610110575050806040939411610103575b601f01601f1916010190565b60008382840101526100f7565b85810182015184870160400152948101946100e3565b600054600019811461013c576001018060005590565b5050634e487b7160e01b600052601160045260246000fd5b604051906040820182811067ffffffffffffffff82111761019e57604052601e82527f48656c6c6f20576f726c642066726f6d20616e2075727361206e6f64652e00006020830152565b505050634e487b7160e01b600052604160045260246000fdfea3646970667358221220558eea9ea0fc897b48ba759f8f6cddb8d9472f66c8840242a0243442c4c2be966c6578706572696d656e74616cf564736f6c634300080c0041").unwrap();
+        let bytecode = Bytecode::new_raw(Bytes::from(bytes).to_vec().into());
+        let contract = AccountInfo {code: Some(bytecode.clone()),code_hash: bytecode.hash(), .. AccountInfo::default()};
+        let mut state = self.current_state.lock().await;
+
+        state.db.insert_account_info("0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".parse().unwrap(), contract);
+
+        self.commit(RequestCommit{});
+
         ResponseInitChain::default()
     }
 
@@ -228,7 +253,7 @@ impl<Db: Send + Sync + Database + DatabaseCommit> InfoTrait for Info<Db> {
                 let result = state.execute(tx, true).await.unwrap();
                 QueryResponse::Tx(result)
             }
-            Query::Balance(address) => match state.db.basic(address.into()) {
+            Query::Balance(address) => match state.db.basic(address.to_fixed_bytes().into()) {
                 Ok(info) => QueryResponse::Balance(info.unwrap_or_default().balance.into()),
                 _ => panic!("error retrieveing balance"),
             },
