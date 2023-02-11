@@ -332,20 +332,14 @@ pub async fn consensus_start(
 
     //for now we just spawn one worker but there could be more
     let id: u32 = 0;
-    let new_keypair = keypair_name.clone();
-    let new_committee = committee.clone();
-    let handle = tokio::spawn(async move {
-        tokio::time::sleep(std::time::Duration::from_secs(5)).await;
-        Worker::spawn(
+
+    Worker::spawn(
             new_keypair,
             0,
             new_committee,
             parameters,
             worker_store.clone(),
         );
-
-        ()
-    });
 
     process(
         rx_output,
