@@ -1,10 +1,11 @@
 use crate::{AbciApi, AbciQueryQuery, ConsensusConfig};
 use anyhow::{bail, Context, Result};
-use db::{rocks::RocksDb, rocks_config::RocksDbConfig};
+use db::{rocks, rocks_config::RocksDbConfig};
 use libp2p::identity::ed25519::PublicKey;
 use libp2p::identity::Keypair as LibKeypair;
 use std::net::SocketAddr;
 use std::path::PathBuf;
+use db::rocks::DB;
 use tokio::sync::mpsc::{channel, Receiver};
 use tokio::sync::oneshot::Sender as OneShotSender;
 use tracing::warn;
@@ -142,14 +143,15 @@ impl Engine {
         // Open the database to each worker
         // TODO: Figure out if this is expensive
         // Should this be read only?
-        let worker_store = RocksDb::open(
+        let worker_store = rocks::DB::open_for_read_only(
+            &rocks::Options::default(),
             PathBuf::from(self.worker_db(worker_id)),
-            &RocksDbConfig::default(),
+            true
         )?;
 
         // Query the db
         let key = digest.to_vec();
-        match worker_store.db.get(&key) {
+        match worker_store.get(&key) {
             Ok(Some(res)) => Ok(res),
             Ok(None) => bail!("digest {} not found", digest),
             Err(err) => bail!(err),
@@ -301,6 +303,7 @@ pub async fn consensus_start(
         Store::new(&config.database_path).with_context(|| "Failed to create primary store")?;
     let worker_store = Store::new(&format!("{}-{}", config.database_path, "worker"))
         .with_context(|| "Failed to create worker store")?;
+
     // Channels the sequence of certificates.
     let (tx_output, mut rx_output) = channel(CHANNEL_CAPACITY);
 
