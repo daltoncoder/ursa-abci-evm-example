@@ -22,7 +22,7 @@ impl ConsensusConfig {
         "0.0.0.0:3005".into()
     }
     fn default_database_path() -> String {
-        "~/.ursa/data/index_provider_db".into()
+        "~/.ursa/data/narwhal".into()
     }
     fn default_params() -> Parameters {
         Parameters::default()
