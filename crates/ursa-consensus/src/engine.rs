@@ -334,9 +334,9 @@ pub async fn consensus_start(
     let id: u32 = 0;
 
     Worker::spawn(
-            new_keypair,
+            keypair_name.clone(),
             0,
-            new_committee,
+            committee.clone(),
             parameters,
             worker_store.clone(),
         );
@@ -350,7 +350,6 @@ pub async fn consensus_start(
         app_api,
     )
     .await?;
-    handle.await.unwrap();
     unreachable!();
 }
 
