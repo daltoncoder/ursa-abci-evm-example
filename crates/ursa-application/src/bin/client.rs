@@ -85,7 +85,7 @@ async fn main() -> Result<()>{
     let query = serde_json::to_string(&query)?;
     let client = reqwest::Client::new();
     let res = client
-       .get(format!("{}/abci_query", "http://127.0.0.1:3005"))
+       .get(format!("{}/abci_query", "http://192.168.1.237:3005"))
         .query(&[("data", query), ("path", "".to_string())])
          .send()
         .await?;
@@ -120,14 +120,14 @@ async fn main() -> Result<()>{
 
         }
         "inc" => {
-            let encoded = abi.encode("get", ())?;
+            let encoded = abi.encode("add", ())?;
             let transaction_request = TransactionRequest::new().to(contract_addr).data(Bytes::from(hex::decode(hex::encode(&encoded))?)).gas(21000000).from("0xDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".parse::<Address>().unwrap());
 
             let tx = serde_json::to_string(&transaction_request)?;
 
             let client = reqwest::Client::new();
             client
-                .get(format!("{}/broadcast_tx", "http://127.0.0.1:3005"))
+                .get(format!("{}/broadcast_tx", "http://192.168.1.240:3005"))
                 .query(&[("tx", tx)])
                 .send()
                 .await?;
