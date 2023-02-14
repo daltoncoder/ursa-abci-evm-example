@@ -2,7 +2,7 @@ mod server;
 pub use server::AbciApi;
 
 mod engine;
-pub use engine::{Engine, consensus_start};
+pub use engine::{consensus_start, Engine};
 
 mod config;
 pub use config::ConsensusConfig;

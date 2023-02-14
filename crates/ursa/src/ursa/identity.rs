@@ -64,6 +64,8 @@ impl Identity for Keypair {
     fn save(&self, path: &Path) -> Result<()> {
         let pem = self.encode_pem();
         create_dir_all(path.parent().unwrap())?;
+        println!("{:?}", path);
+
         let mut file = File::create(path)?;
         file.write_all(pem.as_bytes())?;
         file.sync_all()?;

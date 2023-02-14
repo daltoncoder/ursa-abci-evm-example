@@ -4,24 +4,8 @@ use abci::async_api::Server;
 use anyhow::Result;
 use std::net::SocketAddr;
 
-use clap::Parser;
-
-// use tracing_error::ErrorLayer;
-
-// use tracing_subscriber::prelude::*;
-
-// /// Initializes a tracing Subscriber for logging
-// #[allow(dead_code)]
-// pub fn subscriber() {
-//     tracing_subscriber::Registry::default()
-//         .with(tracing_subscriber::EnvFilter::new("evm-app=trace"))
-//         .with(ErrorLayer::default())
-//         .with(tracing_subscriber::fmt::layer())
-//         .init()
-// }
-
 pub async fn application_start(config: ApplicationConfig) -> Result<()> {
-    let ApplicationConfig { domain, demo } = config;
+    let ApplicationConfig { domain } = config;
     //  subscriber();
 
     let App {
@@ -29,7 +13,7 @@ pub async fn application_start(config: ApplicationConfig) -> Result<()> {
         mempool,
         info,
         snapshot,
-    } = App::new(demo);
+    } = App::new();
     let server = Server::new(consensus, mempool, info, snapshot);
 
     dbg!(&domain);

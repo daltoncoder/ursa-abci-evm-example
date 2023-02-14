@@ -25,7 +25,11 @@ impl ConsensusConfig {
         "~/.ursa/data/narwhal".into()
     }
     fn default_params() -> Parameters {
-        Parameters::default()
+        Parameters {
+            max_header_delay: 1000,
+            max_batch_delay: 1000,
+            ..Parameters::default()
+        }
     }
 }
 

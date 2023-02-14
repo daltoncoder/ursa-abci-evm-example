@@ -29,7 +29,7 @@ pub struct NetworkConfig {
     pub bootstrap_nodes: Vec<Multiaddr>,
     /// Database path.
     #[serde(default = "NetworkConfig::default_database_path")]
-    pub database_path: PathBuf,
+    pub database_path: PathBuf, // ~/ursa/
     /// user identity name
     #[serde(default = "NetworkConfig::default_identity")]
     pub identity: String,

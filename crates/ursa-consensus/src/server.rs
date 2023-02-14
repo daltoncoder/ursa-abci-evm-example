@@ -7,7 +7,7 @@ use tokio::sync::mpsc::Sender;
 use tokio::sync::oneshot::{channel as oneshot_channel, Sender as OneShotSender};
 use tokio_util::codec::{Framed, LengthDelimitedCodec};
 use tracing::{error, warn};
-use warp::{Filter, Rejection};
+use warp::{Filter, Rejection, Reply};
 
 use std::net::SocketAddr;
 
@@ -33,7 +33,7 @@ impl<T: Send + Sync + std::fmt::Debug> AbciApi<T> {
 }
 
 impl AbciApi<ResponseQuery> {
-    pub fn routes(self) -> impl Filter<Extract = impl warp::Reply, Error = Rejection> + Clone {
+    pub fn routes(self) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
         let route_broadcast_tx = warp::path("broadcast_tx")
             .and(warp::query::<BroadcastTxQuery>())
             .and_then(move |req: BroadcastTxQuery| async move {
@@ -62,7 +62,6 @@ impl AbciApi<ResponseQuery> {
             .and_then(move |req: AbciQueryQuery| {
                 let tx_abci_queries = self.tx.clone();
                 async move {
-
                     let (tx, rx) = oneshot_channel();
                     match tx_abci_queries.send((tx, req.clone())).await {
                         Ok(_) => {}
