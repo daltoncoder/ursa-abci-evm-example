@@ -1,11 +1,9 @@
 use crate::{AbciApi, AbciQueryQuery, ConsensusConfig};
 use anyhow::{bail, Context, Result};
-use db::{rocks, rocks_config::RocksDbConfig};
-use libp2p::identity::ed25519::PublicKey;
+use db::rocks;
 use libp2p::identity::Keypair as LibKeypair;
 use std::net::SocketAddr;
 use std::path::PathBuf;
-use db::rocks::DB;
 use tokio::sync::mpsc::{channel, Receiver};
 use tokio::sync::oneshot::Sender as OneShotSender;
 use tracing::warn;
@@ -19,7 +17,7 @@ use tendermint_proto::abci::{
 use tendermint_proto::types::Header;
 
 // Narwhal types
-use narwhal_config::{Committee, Import as _, KeyPair, Parameters};
+use narwhal_config::{Committee, Import as _, KeyPair};
 use narwhal_consensus::Consensus;
 use narwhal_crypto::{Digest, PublicKey as NarPublicKey};
 use narwhal_primary::{Certificate, Primary};
@@ -55,7 +53,7 @@ impl Engine {
         store_path: &str,
         rx_abci_queries: Receiver<(OneShotSender<ResponseQuery>, AbciQueryQuery)>,
     ) -> Self {
-        let mut client = ClientBuilder::default().connect(&app_address).unwrap();
+        let mut client = ClientBuilder::default().connect(app_address).unwrap();
 
         let last_block_height = client
             .info(RequestInfo::default())
@@ -63,8 +61,8 @@ impl Engine {
             .unwrap_or_default();
 
         // Instantiate a new client to not be locked in an Info connection
-        let client = ClientBuilder::default().connect(&app_address).unwrap();
-        let req_client = ClientBuilder::default().connect(&app_address).unwrap();
+        let client = ClientBuilder::default().connect(app_address).unwrap();
+        let req_client = ClientBuilder::default().connect(app_address).unwrap();
         Self {
             app_address,
             store_path: store_path.to_string(),
@@ -139,19 +137,19 @@ impl Engine {
 
     /// Opens a RocksDB handle to a Worker's database and tries to read the batch
     /// stored at the provided certificate's digest.
-    fn reconstruct_batch(&self, digest: Digest, worker_id: u32) -> Result<Vec<u8>> {
+    fn reconstruct_batch(&self, digest: Digest) -> Result<Vec<u8>> {
         // Open the database to each worker
         // TODO: Figure out if this is expensive
         // Should this be read only?
         let worker_store = rocks::DB::open_for_read_only(
             &rocks::Options::default(),
-            PathBuf::from(self.worker_db(worker_id)),
-            true
+            PathBuf::from(self.worker_db()),
+            true,
         )?;
 
         // Query the db
         let key = digest.to_vec();
-        match worker_store.get(&key) {
+        match worker_store.get(key) {
             Ok(Some(res)) => Ok(res),
             Ok(None) => bail!("digest {} not found", digest),
             Err(err) => bail!(err),
@@ -188,8 +186,8 @@ impl Engine {
         let batches = certificate
             .header
             .payload
-            .into_iter()
-            .map(|(digest, worker_id)| self.reconstruct_batch(digest, worker_id))
+            .into_keys()
+            .map(|digest| self.reconstruct_batch(digest))
             .collect::<Vec<_>>();
 
         // Deliver
@@ -205,7 +203,7 @@ impl Engine {
 
     /// Helper function for getting the database handle to a worker associated
     /// with a primary (e.g. Primary db-0 -> Worker-0 db-0-0, Wroekr-1 db-0-1 etc.)
-    fn worker_db(&self, id: u32) -> String {
+    fn worker_db(&self) -> String {
         format!("{}-{}", self.store_path, "worker")
     }
 }
@@ -216,7 +214,7 @@ impl Engine {
     ///
     /// TODO: this is where we should load a genesis file
     pub fn init_chain(&mut self) -> Result<()> {
-        let mut client = ClientBuilder::default().connect(&self.app_address)?;
+        let mut client = ClientBuilder::default().connect(self.app_address)?;
         match client.init_chain(RequestInitChain::default()) {
             Ok(_) => {}
             Err(err) => {
@@ -305,7 +303,7 @@ pub async fn consensus_start(
         .with_context(|| "Failed to create worker store")?;
 
     // Channels the sequence of certificates.
-    let (tx_output, mut rx_output) = channel(CHANNEL_CAPACITY);
+    let (tx_output, rx_output) = channel(CHANNEL_CAPACITY);
 
     //Spawn the primary and and consensus core
 
@@ -334,15 +332,13 @@ pub async fn consensus_start(
     //spawn worker
 
     //for now we just spawn one worker but there could be more
-    let id: u32 = 0;
-
     Worker::spawn(
-            keypair_name.clone(),
-            0,
-            committee.clone(),
-            parameters,
-            worker_store.clone(),
-        );
+        keypair_name,
+        0,
+        committee.clone(),
+        parameters,
+        worker_store.clone(),
+    );
 
     process(
         rx_output,
@@ -382,7 +378,6 @@ async fn process(
         let api = AbciApi::new(mempool_address, tx_abci_queries);
         // let tx_abci_queries = tx_abci_queries.clone();
         // Spawn the ABCI RPC endpoint
-
 
         let mut address = abci_api.parse::<SocketAddr>().unwrap();
         address.set_ip("0.0.0.0".parse().unwrap());

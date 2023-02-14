@@ -5,9 +5,6 @@ pub struct ApplicationConfig {
     ///The address the application is listening on. defaults to "0.0.0.0:3005"
     #[serde(default = "ApplicationConfig::default_domain")]
     pub domain: String,
-    /// used for testing. Defaults to false
-    #[serde(default)]
-    pub demo: bool,
 }
 
 impl ApplicationConfig {
@@ -20,7 +17,6 @@ impl Default for ApplicationConfig {
     fn default() -> Self {
         Self {
             domain: Self::default_domain(),
-            demo: false,
         }
     }
 }
