@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "crates/ursa",
+  "crates/ursa-application",
   "crates/ursa-consensus",
   "crates/ursa-gateway",
   "crates/ursa-index-provider",
@@ -11,8 +12,6 @@ members = [
   "crates/ursa-store",
   "crates/ursa-telemetry",
   "crates/ursa-tracker",
-  "crates/ursa-application",
-  "crates/ursa-consensus"
 ]
 
 exclude = [
@@ -98,6 +97,19 @@ tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 axum-tracing-opentelemetry = "0.8.2"
 axum-prometheus = "0.3.0"
 
+[patch.'https://github.com/gakonst/ethers-rs']
+ethers = { git = "https://github.com/qti3e/ethers-rs", rev = "7da559bbedec67c034391f693a01b6a1b94d6a77" }
+ethers-addressbook = { git = "https://github.com/qti3e/ethers-rs", rev = "7da559bbedec67c034391f693a01b6a1b94d6a77" }
+ethers-contract = { git = "https://github.com/qti3e/ethers-rs", rev = "7da559bbedec67c034391f693a01b6a1b94d6a77" }
+ethers-contract-abigen = { git = "https://github.com/qti3e/ethers-rs", rev = "7da559bbedec67c034391f693a01b6a1b94d6a77" }
+ethers-contract-derive = { git = "https://github.com/qti3e/ethers-rs", rev = "7da559bbedec67c034391f693a01b6a1b94d6a77" }
+ethers-core = { git = "https://github.com/qti3e/ethers-rs", rev = "7da559bbedec67c034391f693a01b6a1b94d6a77" }
+ethers-etherscan = { git = "https://github.com/qti3e/ethers-rs", rev = "7da559bbedec67c034391f693a01b6a1b94d6a77" }
+ethers-middleware = { git = "https://github.com/qti3e/ethers-rs", rev = "7da559bbedec67c034391f693a01b6a1b94d6a77" }
+ethers-providers = { git = "https://github.com/qti3e/ethers-rs", rev = "7da559bbedec67c034391f693a01b6a1b94d6a77" }
+ethers-signers = { git = "https://github.com/qti3e/ethers-rs", rev = "7da559bbedec67c034391f693a01b6a1b94d6a77" }
+ethers-solc  = { git = "https://github.com/qti3e/ethers-rs", rev = "7da559bbedec67c034391f693a01b6a1b94d6a77" }
+
 [profile.release]
 # 2 full, 0 nothing, 1 good enough.
 debug = 1
@@ -111,16 +123,3 @@ codegen-units = 1
 strip = 'debuginfo'
 # On panic terminate the process.
 panic = 'abort'
-
-[patch.'https://github.com/gakonst/ethers-rs']
-ethers = { git = "https://github.com/qti3e/ethers-rs", rev="7da559bbedec67c034391f693a01b6a1b94d6a77" }
-ethers-addressbook = { git = "https://github.com/qti3e/ethers-rs", rev="7da559bbedec67c034391f693a01b6a1b94d6a77" }
-ethers-contract = { git = "https://github.com/qti3e/ethers-rs", rev="7da559bbedec67c034391f693a01b6a1b94d6a77" }
-ethers-contract-abigen = { git = "https://github.com/qti3e/ethers-rs", rev="7da559bbedec67c034391f693a01b6a1b94d6a77" }
-ethers-contract-derive = { git = "https://github.com/qti3e/ethers-rs", rev="7da559bbedec67c034391f693a01b6a1b94d6a77" }
-ethers-core = { git = "https://github.com/qti3e/ethers-rs", rev="7da559bbedec67c034391f693a01b6a1b94d6a77" }
-ethers-etherscan = { git = "https://github.com/qti3e/ethers-rs", rev="7da559bbedec67c034391f693a01b6a1b94d6a77" }
-ethers-middleware = { git = "https://github.com/qti3e/ethers-rs", rev="7da559bbedec67c034391f693a01b6a1b94d6a77" }
-ethers-providers = { git = "https://github.com/qti3e/ethers-rs", rev="7da559bbedec67c034391f693a01b6a1b94d6a77" }
-ethers-signers = { git = "https://github.com/qti3e/ethers-rs", rev="7da559bbedec67c034391f693a01b6a1b94d6a77" }
-ethers-solc  = { git = "https://github.com/qti3e/ethers-rs", rev="7da559bbedec67c034391f693a01b6a1b94d6a77" }
